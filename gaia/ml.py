@@ -5,6 +5,7 @@ from rtree import index
 from scipy import spatial
 from sklearn.base import is_classifier, is_regressor
 
+from gaia.utils import spatial_weighting
 
 class SpatialModel:
     """Base class for spatial modeling."""
@@ -35,7 +36,7 @@ class SpatialModel:
                 "It has to be a integer higher than 2."
             )
 
-    def fit(self, X, Z, y, sample_weight=None):
+    def fit(self, X, Z, y):
         """Fit the estimators.
 
         Parameters
@@ -48,11 +49,7 @@ class SpatialModel:
             `n_coordinates` is the number of coordinates, for instance **lat** and **lng**.
         y : array-like of shape (n_samples,)
             Target values.
-        sample_weight : array-like of shape (n_samples,) or None
-            Sample weights. If None, then samples are equally weighted.
-            Note that this is supported only if all underlying estimators
-            support sample weights.
-            
+
         Returns
         -------
         self : object
@@ -61,7 +58,6 @@ class SpatialModel:
         self.train_X = X
         self.train_Z = Z
         self.train_y = y
-        self.sample_weight = sample_weight
 
     def predict(self, X, Z):
         """yolo"""
@@ -71,15 +67,13 @@ class SpatialModel:
 
             # get sub data
             index = self.spatial_index.query(Z[line, :], k=self.n_neighbors)[1]
+            local_train_Z = self.train_Z[index,:]
             local_train_X = self.train_X[index, :]
             local_train_y = self.train_y[index]
-            if not self.sample_weight:
-                local_weights = self.sample_weight[index]
-                local_weights = local_weights / np.sum(local_weights)
-            else:
-                local_weights = None
+
+            weights = spatial_weighting(local_train_Z, Z[line,:])
             self.models.append(
-                self.estimator.fit(local_train_X, local_train_y, local_weights).copy()
+                self.estimator.fit(local_train_X, local_train_y, weights).copy()
             )
             results = self.models[-1].predict(X[line, :])
         return results
