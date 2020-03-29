@@ -3,6 +3,7 @@
 import numpy as np
 from sklearn.metrics.pairwise import euclidean_distances
 
+
 def spatial_weighting(Z, new_coord):
     """Initialization of SpatialModel.
 

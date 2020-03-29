@@ -7,6 +7,7 @@ from sklearn.base import is_classifier, is_regressor
 
 from gaia.utils import spatial_weighting
 
+
 class SpatialModel:
     """Base class for spatial modeling."""
 
@@ -67,11 +68,11 @@ class SpatialModel:
 
             # get sub data
             index = self.spatial_index.query(Z[line, :], k=self.n_neighbors)[1]
-            local_train_Z = self.train_Z[index,:]
+            local_train_Z = self.train_Z[index, :]
             local_train_X = self.train_X[index, :]
             local_train_y = self.train_y[index]
 
-            weights = spatial_weighting(local_train_Z, Z[line,:])
+            weights = spatial_weighting(local_train_Z, Z[line, :])
             self.models.append(
                 self.estimator.fit(local_train_X, local_train_y, weights).copy()
             )
