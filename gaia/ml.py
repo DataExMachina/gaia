@@ -7,6 +7,21 @@ from sklearn.base import is_classifier, is_regressor
 
 from gaia.utils import spatial_weighting
 
+def weighted_average(y, weights):
+    """
+
+    Parameters
+    ----------
+    y : np.ndarray of shape (n_samples,)
+    weights : np.ndarray of shape (n_sample,)
+
+    Returns
+    -------
+    pred : np.ndarray
+    """
+    pred = np.sum(y*weights)
+    return pred
+
 
 class SpatialModel:
     """Base class for spatial modeling."""
