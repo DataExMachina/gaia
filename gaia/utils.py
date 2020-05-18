@@ -22,3 +22,4 @@ def spatial_weighting(Z, new_coord, pairwise_distance):
     new_to_Z = pairwise_distance(Z, new_coord)
     weights = np.linalg.inv(distance_matrix).dot(new_to_Z)
     return weights
+    
