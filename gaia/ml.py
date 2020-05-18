@@ -12,6 +12,7 @@ from sklearn.metrics.pairwise import euclidean_distances
 
 from gaia.utils import spatial_weighting
 
+
 def weighted_average(y, weights):
     """
 
@@ -24,13 +25,19 @@ def weighted_average(y, weights):
     -------
     pred : np.ndarray
     """
-    pred = np.sum(y*weights)
+    pred = np.sum(y * weights)
     return pred
+
 
 class SpatialModel:
     """Base class for spatial modeling."""
 
-    def __init__(self, cluster=KMeans(), estimator=LinearRegression(), pairwise_distance=euclidean_distances):
+    def __init__(
+        self,
+        cluster=KMeans(),
+        estimator=LinearRegression(),
+        pairwise_distance=euclidean_distances,
+    ):
         """Initialization of SpatialModel.
 
         Parameters
@@ -43,13 +50,15 @@ class SpatialModel:
             A distance metric
         """
         # define clusteting method
-        if (cluster._estimator_type=="clusterer") and \
-           hasattr(cluster, 'predict') and \
-           hasattr(cluster, "n_clusters"):
+        if (
+            (cluster._estimator_type == "clusterer")
+            and hasattr(cluster, "predict")
+            and hasattr(cluster, "n_clusters")
+        ):
             self.cluster = cluster
         else:
             raise TypeError("Wrong method for cluster argument.")
-        
+
         # declare machine learning method
         if is_classifier(estimator) or is_regressor(estimator):
             self.estimator = estimator
@@ -59,11 +68,13 @@ class SpatialModel:
                 "for supervised learning."
             )
         # declare pairwise
-        if pairwise_distance.__module__=="sklearn.metrics.pairwise":
+        if pairwise_distance.__module__ == "sklearn.metrics.pairwise":
             self.pairwise_distance = pairwise_distance
         else:
-            raise TypeError('Wrong pairwise function. You should use functions from sklearn.metrics.pairwise.')
-        
+            raise TypeError(
+                "Wrong pairwise function. You should use functions from sklearn.metrics.pairwise."
+            )
+
     def fit(self, X, Z, y):
         """Fit the estimators.
 
@@ -87,14 +98,20 @@ class SpatialModel:
         self.cluster.fit(Z)
 
         # compute spatial weights
-        overall_fit_weights = spatial_weighting(self.cluster.cluster_centers_, Z, self.pairwise_distance)
-        overall_fit_weights = overall_fit_weights - overall_fit_weights.min(1).reshape(-1,1)
-        overall_fit_weights = overall_fit_weights / overall_fit_weights.sum(1).reshape(-1,1)
+        overall_fit_weights = spatial_weighting(
+            self.cluster.cluster_centers_, Z, self.pairwise_distance
+        )
+        overall_fit_weights = overall_fit_weights - overall_fit_weights.min(1).reshape(
+            -1, 1
+        )
+        overall_fit_weights = overall_fit_weights / overall_fit_weights.sum(1).reshape(
+            -1, 1
+        )
 
         # iterate over clusters (a model by cluster)
         self.list_estimators = list()
         for num_model in range(self.cluster.n_clusters):
-            current_weights = overall_fit_weights[num_model,:]
+            current_weights = overall_fit_weights[num_model, :]
             current_model = copy.deepcopy(self.estimator)
             current_model.fit(X, y, sample_weight=current_weights)
             self.list_estimators.append(current_model)
@@ -118,13 +135,15 @@ class SpatialModel:
         """
 
         # compute spatial weights
-        overall_predict_weights = spatial_weighting(self.cluster.cluster_centers_, Z, self.pairwise_distance)
+        overall_predict_weights = spatial_weighting(
+            self.cluster.cluster_centers_, Z, self.pairwise_distance
+        )
 
         if is_regressor(self.estimator):
-            piecewise_predict = np.array(list(map(lambda model: model.predict(X), self.list_estimators)))
-            predicted_values = (overall_predict_weights.T*piecewise_predict.T).sum(1)
+            piecewise_predict = np.array(
+                list(map(lambda model: model.predict(X), self.list_estimators))
+            )
+            predicted_values = (overall_predict_weights.T * piecewise_predict.T).sum(1)
             return predicted_values
         else:
             raise NotImplementedError("Classification has not been implemented yet.")
-
-        
