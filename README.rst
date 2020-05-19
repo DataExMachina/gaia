@@ -1,7 +1,7 @@
 ====
 gaia
 ====
-
+.. image:: https://github.com/DataExMachina/gaia/blob/master/docs/logo.png
 
 .. image:: https://img.shields.io/pypi/v/gaia.svg
         :target: https://pypi.python.org/pypi/gaia
