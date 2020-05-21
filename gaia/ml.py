@@ -2,8 +2,6 @@
 
 import copy
 import numpy as np
-from rtree import index
-from scipy import spatial
 from sklearn.base import is_classifier, is_regressor
 
 from sklearn.cluster import KMeans
@@ -101,12 +99,12 @@ class SpatialModel:
         overall_fit_weights = spatial_weighting(
             self.cluster.cluster_centers_, Z, self.pairwise_distance
         )
-        overall_fit_weights = overall_fit_weights - overall_fit_weights.min(1).reshape(
-            -1, 1
-        )
-        overall_fit_weights = overall_fit_weights / overall_fit_weights.sum(1).reshape(
-            -1, 1
-        )
+        overall_fit_weights = overall_fit_weights - overall_fit_weights.min(
+            1
+        ).reshape(-1, 1)
+        overall_fit_weights = overall_fit_weights / overall_fit_weights.sum(
+            1
+        ).reshape(-1, 1)
 
         # iterate over clusters (a model by cluster)
         self.list_estimators = list()
@@ -143,7 +141,11 @@ class SpatialModel:
             piecewise_predict = np.array(
                 list(map(lambda model: model.predict(X), self.list_estimators))
             )
-            predicted_values = (overall_predict_weights.T * piecewise_predict.T).sum(1)
+            predicted_values = (
+                overall_predict_weights.T * piecewise_predict.T
+            ).sum(1)
             return predicted_values
         else:
-            raise NotImplementedError("Classification has not been implemented yet.")
+            raise NotImplementedError(
+                "Classification has not been implemented yet."
+            )

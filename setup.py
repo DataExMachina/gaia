@@ -10,7 +10,7 @@ with open('README.rst') as readme_file:
 with open('HISTORY.rst') as history_file:
     history = history_file.read()
 
-requirements = ['sklearn', 'Rtree']
+requirements = ['sklearn']
 
 setup_requirements = [ ]
 
@@ -41,9 +41,9 @@ setup(
     license="MIT license",
     long_description=readme + '\n\n' + history,
     include_package_data=True,
-    keywords='gaia',
-    name='gaia',
-    packages=find_packages(include=['gaia', 'gaia.*']),
+    keywords='gaia-ml',
+    name='gaia-ml',
+    packages=find_packages(include=['gaia-ml', 'gaia-ml.*']),
     setup_requires=setup_requirements,
     test_suite='tests',
     tests_require=test_requirements,
