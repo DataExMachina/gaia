@@ -2,61 +2,34 @@
 
 import copy
 import numpy as np
-from sklearn.base import is_classifier, is_regressor
+import pandas as pd
 
+from sklearn.base import is_classifier, is_regressor
 from sklearn.cluster import KMeans
-from sklearn.linear_model import LinearRegression
+from sklearn.linear_model import LinearRegression, LogisticRegression
 from sklearn.metrics.pairwise import euclidean_distances
 
 from gaia.utils import spatial_weighting
-
-
-def weighted_average(y, weights):
-    """
-
-    Parameters
-    ----------
-    y : np.ndarray of shape (n_samples,)
-    weights : np.ndarray of shape (n_sample,)
-
-    Returns
-    -------
-    pred : np.ndarray
-    """
-    pred = np.sum(y * weights)
-    return pred
+from gaia.kernel import Kernel
 
 
 class SpatialModel:
     """Base class for spatial modeling."""
 
     def __init__(
-        self,
-        cluster=KMeans(),
-        estimator=LinearRegression(),
-        pairwise_distance=euclidean_distances,
+        self, estimator=LinearRegression(), n_clusters=8, cluster_random_state=None
     ):
         """Initialization of SpatialModel.
 
         Parameters
         ----------
-        cluster: sklearn.cluster
-            Clustering method.
+        n_clusters: int
+            Number of clusters to build. Default `sklearn.cluster.KMeans` value.
         estimator: sklearn.base.BaseEstimator
             A sklearn model with fit / predict paradigm.
         pairwise_distance: sklearn.metrics.pairwise
             A distance metric
         """
-        # define clusteting method
-        if (
-            (cluster._estimator_type == "clusterer")
-            and hasattr(cluster, "predict")
-            and hasattr(cluster, "n_clusters")
-        ):
-            self.cluster = cluster
-        else:
-            raise TypeError("Wrong method for cluster argument.")
-
         # declare machine learning method
         if is_classifier(estimator) or is_regressor(estimator):
             self.estimator = estimator
@@ -65,13 +38,9 @@ class SpatialModel:
                 "It does not seem to be a scikit-learn estimator "
                 "for supervised learning."
             )
-        # declare pairwise
-        if pairwise_distance.__module__ == "sklearn.metrics.pairwise":
-            self.pairwise_distance = pairwise_distance
-        else:
-            raise TypeError(
-                "Wrong pairwise function. You should use functions from sklearn.metrics.pairwise."
-            )
+
+        # declare clustering method
+        self.cluster = KMeans(n_clusters=n_clusters, random_state=cluster_random_state)
 
     def fit(self, X, Z, y):
         """Fit the estimators.
@@ -91,30 +60,18 @@ class SpatialModel:
         -------
         self : object
         """
-        # start by running the clustering method
-        # and deduce weight (inverse of distance)
+        # fit clustering
         self.cluster.fit(Z)
-
-        # compute spatial weights
-        overall_fit_weights = spatial_weighting(
-            self.cluster.cluster_centers_, Z, self.pairwise_distance
-        )
-        overall_fit_weights = overall_fit_weights - overall_fit_weights.min(
-            1
-        ).reshape(-1, 1)
-        overall_fit_weights = overall_fit_weights / overall_fit_weights.sum(
-            1
-        ).reshape(-1, 1)
 
         # iterate over clusters (a model by cluster)
         self.list_estimators = list()
         for num_model in range(self.cluster.n_clusters):
-            current_weights = overall_fit_weights[num_model, :]
+            model_mask = self.cluster.labels_ == num_model
             current_model = copy.deepcopy(self.estimator)
-            current_model.fit(X, y, sample_weight=current_weights)
+            current_model.fit(X[model_mask], y[model_mask])
             self.list_estimators.append(current_model)
 
-    def predict(self, X, Z):
+    def predict(self, X, Z, kernel_norm=Kernel(0.07)):
         """Fit the estimators.
 
         Parameters
@@ -125,27 +82,21 @@ class SpatialModel:
         Z : {array-like, sparse matrix} of shape (n_samples, n_coordinates)
             Training spatial coordinates, where `n_samples` is the number of samples and
             `n_coordinates` is the number of coordinates, for instance **lat** and **lng**.
+        kernel: gaia.kernel function
+            Kernel used to moderate cluster distance.
 
         Returns
         -------
         predicted_values: array, shape (n_samples,)
             Returns predicted values.
         """
-
-        # compute spatial weights
-        overall_predict_weights = spatial_weighting(
-            self.cluster.cluster_centers_, Z, self.pairwise_distance
-        )
-
         if is_regressor(self.estimator):
+            cluster_predict = self.cluster.transform(Z)
+            piecewise_weights = kernel_norm.kernel(cluster_predict)
             piecewise_predict = np.array(
                 list(map(lambda model: model.predict(X), self.list_estimators))
             )
-            predicted_values = (
-                overall_predict_weights.T * piecewise_predict.T
-            ).sum(1)
+            predicted_values = (piecewise_weights * piecewise_predict.T).sum(1)
             return predicted_values
         else:
-            raise NotImplementedError(
-                "Classification has not been implemented yet."
-            )
+            raise NotImplementedError("Classification has not been implemented yet.")
