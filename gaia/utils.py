@@ -23,4 +23,3 @@ def spatial_weighting(centroids, new_coords, pairwise_distance):
     outer_dist = pairwise_distance(centroids, new_coords)
     weights = np.linalg.inv(inner_dist).dot(outer_dist)
     return weights
-

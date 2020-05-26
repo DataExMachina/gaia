@@ -93,8 +93,12 @@ class SpatialModel:
         """
         if is_regressor(self.estimator):
             # compute clustering weights
-            weighted_cluster_dist = spatial_weighting(self.cluster.cluster_centers_, Z, pairwise_dist)
-            weighted_cluster_dist = (weighted_cluster_dist.T - weighted_cluster_dist.min(1)).T
+            weighted_cluster_dist = spatial_weighting(
+                self.cluster.cluster_centers_, Z, pairwise_dist
+            )
+            weighted_cluster_dist = (
+                weighted_cluster_dist.T - weighted_cluster_dist.min(1)
+            ).T
 
             # compute final cluster weights and predictions
             piecewise_weights = kernel_norm.kernel(weighted_cluster_dist)
