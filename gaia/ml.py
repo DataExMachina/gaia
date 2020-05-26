@@ -2,11 +2,10 @@
 
 import copy
 import numpy as np
-import pandas as pd
 
 from sklearn.base import is_classifier, is_regressor
 from sklearn.cluster import KMeans
-from sklearn.linear_model import LinearRegression, LogisticRegression
+from sklearn.linear_model import LinearRegression
 from sklearn.metrics.pairwise import euclidean_distances
 
 from gaia.utils import spatial_weighting
@@ -71,7 +70,7 @@ class SpatialModel:
             current_model.fit(X[model_mask], y[model_mask])
             self.list_estimators.append(current_model)
 
-    def predict(self, X, Z, kernel_norm=Kernel(0.07)):
+    def predict(self, X, Z, pairwise_dist=euclidean_distances, kernel_norm=Kernel()):
         """Fit the estimators.
 
         Parameters
@@ -82,7 +81,9 @@ class SpatialModel:
         Z : {array-like, sparse matrix} of shape (n_samples, n_coordinates)
             Training spatial coordinates, where `n_samples` is the number of samples and
             `n_coordinates` is the number of coordinates, for instance **lat** and **lng**.
-        kernel: gaia.kernel function
+        pairwise_dist: sklearn.metrics.pairwise
+            Spatial autocorrelation a priori.
+        kernel: gaia.kernel.Kernel class
             Kernel used to moderate cluster distance.
 
         Returns
@@ -91,8 +92,12 @@ class SpatialModel:
             Returns predicted values.
         """
         if is_regressor(self.estimator):
-            cluster_predict = self.cluster.transform(Z)
-            piecewise_weights = kernel_norm.kernel(cluster_predict)
+            # compute clustering weights
+            weighted_cluster_dist = spatial_weighting(self.cluster.cluster_centers_, Z, pairwise_dist)
+            weighted_cluster_dist = (weighted_cluster_dist.T - weighted_cluster_dist.min(1)).T
+
+            # compute final cluster weights and predictions
+            piecewise_weights = kernel_norm.kernel(weighted_cluster_dist)
             piecewise_predict = np.array(
                 list(map(lambda model: model.predict(X), self.list_estimators))
             )

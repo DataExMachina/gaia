@@ -33,7 +33,7 @@ class Kernel:
                 "Wrong method name, it must be on of %s" % self.supported_methods
             )
 
-    def __kernel_norm(self, vector, bandwidth):
+    def _kernel_norm(self, vector, bandwidth):
         """Apply kernel method with double normalization."""
 
         vector = (vector.T / vector.sum(1)).T
@@ -41,26 +41,23 @@ class Kernel:
         vector = (vector.T / vector.sum(1)).T
         return vector
 
-    @staticmethod
-    def __check_nan(vector):
+    def _check_nan(self, vector):
         """Return `True` if there are NaNs in vector"""
         return np.isnan(vector).sum() > 0
 
-    @staticmethod
-    def __iter_bandwidth_search(vector):
+    def _iter_bandwidth_search(self, vector):
         """Find minimal valid bandwidth by dichotomic search."""
         bandwidth_list = list(np.arange(1e-6, 1, 0.001))
         nan_init = list(
             map(
-                lambda b: self.__check_nan(self.__kernel_norm(vector, b)),
-                bandwidth_list,
+                lambda b: self._check_nan(self._kernel_norm(vector, b)), bandwidth_list,
             )
         )
         for nan_index in range(len(nan_init)):
-            if np.isnan(nan[nan_index]):
+            if np.isnan(nan_init[nan_index]):
                 continue
             else:
-                return nan[nan_index]
+                return bandwidth_list[nan_index]
 
     def kernel(self, vector):
         """Generic kernel caller.
@@ -73,9 +70,9 @@ class Kernel:
                 is done (twice).
         """
         if self.bandwidth == "auto":
-            bandwidth = self.__iter_bandwidth_search(vector)
+            bandwidth = self._iter_bandwidth_search(vector)
         else:
             bandwidth = self.bandwidth
 
-        vector = self.__kernel_norm(vector, bandwidth)
+        vector = self._kernel_norm(vector, bandwidth)
         return vector
