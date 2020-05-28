@@ -24,7 +24,9 @@ class Kernel:
         elif isinstance(bandwidth, float) and bandwidth > 0 and bandwidth <= 1:
             self.bandwidth = bandwidth
         else:
-            raise ValueError('Wrong bandwitdh value. It must be str ("auto") or float in (0, 1]')
+            raise ValueError(
+                'Wrong bandwitdh value. It must be str ("auto") or float in (0, 1]'
+            )
 
         if method in self.supported_methods:
             self._kernel_method = eval(method)
