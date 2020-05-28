@@ -11,6 +11,8 @@ from sklearn.metrics.pairwise import euclidean_distances
 from gaia.utils import spatial_weighting
 from gaia.kernel import Kernel
 
+class WrongEstimator(Exception):
+    pass
 
 class SpatialModel:
     """Base class for spatial modeling."""
@@ -33,7 +35,7 @@ class SpatialModel:
         if is_classifier(estimator) or is_regressor(estimator):
             self.estimator = estimator
         else:
-            raise TypeError(
+            raise WrongEstimator(
                 "It does not seem to be a scikit-learn estimator "
                 "for supervised learning."
             )
@@ -105,7 +107,7 @@ class SpatialModel:
             piecewise_predict = np.array(
                 list(map(lambda model: model.predict(X), self.list_estimators))
             )
-            predicted_values = (piecewise_weights * piecewise_predict.T).sum(1)
+            predicted_values = (piecewise_weights * piecewise_predict).sum(0)
             return predicted_values
         else:
             raise NotImplementedError("Classification has not been implemented yet.")
