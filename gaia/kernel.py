@@ -1,4 +1,4 @@
-"""Utils module."""
+"""Kernel module."""
 
 import numpy as np
 
@@ -19,12 +19,12 @@ class Kernel:
         bandwidth: float
             A float in (0, 1].
         """
-        if bandwidth == "auto":
+        if isinstance(bandwidth, str) and bandwidth == "auto":
             self.bandwidth = bandwidth
-        elif bandwidth > 0 and bandwidth <= 1:
+        elif isinstance(bandwidth, float) and bandwidth > 0 and bandwidth <= 1:
             self.bandwidth = bandwidth
         else:
-            raise ValueError("Wrong bandwitdh value, it must be in (0, 1].")
+            raise ValueError('Wrong bandwitdh value. It must be str ("auto") or float in (0, 1]')
 
         if method in self.supported_methods:
             self._kernel_method = eval(method)
