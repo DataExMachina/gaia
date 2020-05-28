@@ -1,7 +1,11 @@
 ====
-gaia
+gaia-ml
 ====
+
 .. image:: https://github.com/DataExMachina/gaia/blob/master/docs/logo.png
+        :alt: Spatial sklearn wrapper from supervised machine learning
+        :scale: 50%
+        :align: center
 
 .. image:: https://img.shields.io/pypi/v/gaia-ml.svg
         :target: https://pypi.python.org/pypi/gaia-ml
@@ -16,10 +20,6 @@ gaia
 .. image:: https://pyup.io/repos/github/DataExMachina/gaia/shield.svg
      :target: https://pyup.io/repos/github/DataExMachina/gaia/
      :alt: Updates
-
-
-Spatial sklearn wrapper
-
 
 * Free software: MIT license
 * Documentation: https://gaia.readthedocs.io.
