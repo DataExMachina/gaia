@@ -11,8 +11,10 @@ from sklearn.metrics.pairwise import euclidean_distances
 from gaia.utils import spatial_weighting
 from gaia.kernel import Kernel
 
+
 class WrongEstimator(Exception):
     pass
+
 
 class SpatialModel:
     """Base class for spatial modeling."""
